@@ -18,13 +18,16 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(r -> r
-                        .requestMatchers("/account/**").permitAll()
+                        .requestMatchers("/account/**", "/error").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(flc -> flc
                         .loginPage("/account/login")
                         .usernameParameter("email")
                         .defaultSuccessUrl("/user")
                 )
+                .logout(lc -> lc
+                        .logoutUrl("/account/logout")
+                        .logoutSuccessUrl("/?logout"))
                 .oneTimeTokenLogin(ottc -> ottc
                         .loginProcessingUrl("/account/ott-submit"))
                 .build();

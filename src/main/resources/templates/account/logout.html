@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" data-th-replace="~{fragments::skeleton(~{::content})}">
+<head>
+    <meta charset="UTF-8">
+    <title>Logout</title>
+</head>
+<body>
+
+<section data-th-fragment="content" class="w-full max-w-md mx-auto p-6 roboto">
+
+    <div class="max-w-xl mx-auto mb-12">
+        <div class="text-center">
+            <form data-th-action="@{/account/logout}" method="post">
+                <button type="submit"
+                        class="w-full py-3 px-4 inline-flex justify-center items-center gap-x-2 text-sm font-medium rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none">
+                    Logout
+                </button>
+
+            </form>
+        </div>
+    </div>
+
+</section>
+
+</body>
+</html>

@@ -20,6 +20,12 @@ public class AccountController {
         return "account/sign-in";
     }
 
+    @GetMapping("/logout")
+    String showLogoutForm() {
+        return "account/logout";
+    }
+
+
     @GetMapping("/forgot-password")
     String forgotPassword() {
         return "account/forgot-password";
