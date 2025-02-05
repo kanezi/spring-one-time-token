@@ -9,53 +9,73 @@
 
 <section data-th-fragment="content" class="w-full max-w-md mx-auto p-6 roboto">
 
-  <div class="max-w-xl mx-auto mb-12">
-    <div class="text-center">
-      <h1 class="text-3xl font-bold text-gray-800 sm:text-4xl dark:text-white">
-        Account
-      </h1>
-    </div>
-  </div>
-
-  <div class="space-y-5">
-    <div class="bg-teal-50 border-t-2 border-teal-500 rounded-lg p-4 dark:bg-teal-800/30" role="alert" tabindex="-1" aria-labelledby="hs-bordered-success-style-label">
-      <div class="flex">
-        <div class="shrink-0">
+    <div class="max-w-xl mx-auto mb-12">
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-800 sm:text-4xl dark:text-white">
+                Account
+            </h1>
         </div>
-        <div class="ms-3">
-          <h3 id="hs-bordered-success-style-label" class="text-gray-800 font-semibold dark:text-white" data-th-text="${ottReason.title}">
-            Successfully updated.
-          </h3>
-          <p class="text-sm text-gray-700 dark:text-neutral-400">
-            You will be redirected in a couple of seconds!
-          </p>
-        </div>
-      </div>
     </div>
 
-  <form data-th-action="@{/account/ott-submit}" method="post" id="ott-login-form">
-    <input type="hidden" id="token" name="token" data-th-value="${param.token}">
-  </form>
+    <div class="space-y-5">
+        <div class="bg-teal-50 border-t-2 border-teal-500 rounded-lg p-4 dark:bg-teal-800/30" role="alert" tabindex="-1"
+             aria-labelledby="hs-bordered-success-style-label">
+            <div class="flex">
+                <div class="shrink-0">
+                </div>
+                <div class="ms-3" id="initial-message">
+                    <h3 id="hs-bordered-success-style-label" class="text-gray-800 font-semibold dark:text-white"
+                        data-th-text="${ottReason.title}">
+                        Successfully updated.
+                    </h3>
+                    <p class="text-sm text-gray-700 dark:text-neutral-400">
+                        You will be redirected in a couple of seconds!
+                    </p>
+                </div>
+            </div>
+        </div>
 
-  <script data-th-inline="javascript">
-    window.onload = function(){
-      const ottForm = window.document.getElementById("ott-login-form");
-      const url = ottForm.action;
-      let xhr = new XMLHttpRequest();
-      xhr.open('POST', url, true);
-      xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-      xhr.send(new URLSearchParams(new FormData(ottForm)).toString());
+        <form data-th-action="@{/account/ott-submit}" method="post" id="ott-login-form">
+            <input type="hidden" id="token" name="token" data-th-value="${param.token}">
+        </form>
 
-      xhr.onreadystatechange = function() {
-        if(xhr.readyState == 4 && xhr.status == 200) {
-            window.location.replace(/*[[@{/user?chpwd}]]*/'/user?chpwd');
-        }
-      }
+        <form data-th-action="@{/account/activate}" method="post" id="activate-account-form"></form>
 
-    }
-  </script>
+        <script data-th-inline="javascript">
+            window.onload = function(){
+              let reason = /*[[${ottReason.reason}]]*/'default';
 
-  </div>
+              const ottForm = window.document.getElementById("ott-login-form");
+              const url = ottForm.action;
+              let xhr = new XMLHttpRequest();
+              xhr.open('POST', url, true);
+              xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+              xhr.send(new URLSearchParams(new FormData(ottForm)).toString());
+
+              xhr.onreadystatechange = function() {
+                console.log(xhr);
+                if(xhr.readyState == 4 && xhr.status == 200) {
+                  if (xhr.responseURL.includes("error")) {
+                     window.location.replace(xhr.responseURL);
+                     return;
+                  }
+
+                  if (reason==="change-password") {
+                    window.location.replace(/*[[@{/user?chpwd}]]*/'/user?chpwd');
+                  }
+                  else if (reason=== "activate") {
+                    window.document.getElementById("activate-account-form").submit();
+                  } else {
+                    alert("unsupported action!");
+                  }
+                }
+              }
+
+            }
+        </script>
+
+
+    </div>
 </section>
 
 </body>

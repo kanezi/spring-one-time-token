@@ -30,12 +30,14 @@
                 </svg>
             </div>
             <div class="flex-1 md:flex md:justify-between ms-2">
-                <p id="hs-link-on-right-label" class="text-sm">
+                <p id="hs-link-on-right-label" class="text-sm"
+                   data-th-text="${message}"
+                >
                     We have sent you activation link! Please check your email!
                 </p>
                 <p class="text-sm mt-3 md:mt-0 md:ms-6">
                     <a class="text-gray-800 hover:text-gray-500 focus:outline-none focus:text-gray-500 font-medium whitespace-nowrap dark:text-neutral-200 dark:hover:text-neutral-400 dark:focus:text-neutral-400"
-                       data-th-href="@{/login}">Resend</a>
+                       data-th-href="@{/account/__${repeatActionPart}__}">Resend</a>
                 </p>
             </div>
         </div>

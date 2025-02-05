@@ -17,6 +17,7 @@ public class UserController {
 
     @GetMapping
     String userProfile(@RequestParam(name = "chpwd", required = false, defaultValue = "true") boolean changePassword,
+                       @RequestParam(name = "activated", required = false, defaultValue = "true") boolean activated,
                        @ModelAttribute ChangePasswordForm changePasswordForm) {
         return "user/profile";
     }

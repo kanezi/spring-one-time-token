@@ -10,6 +10,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 
 @Configuration
 public class SecurityConfig {
@@ -18,18 +19,22 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(r -> r
-                        .requestMatchers("/account/**", "/error").permitAll()
+                        .requestMatchers("/account/**", "/error", "/").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(flc -> flc
                         .loginPage("/account/login")
                         .usernameParameter("email")
                         .defaultSuccessUrl("/user")
+                        .failureForwardUrl("/account/login?error")
                 )
                 .logout(lc -> lc
                         .logoutUrl("/account/logout")
                         .logoutSuccessUrl("/?logout"))
                 .oneTimeTokenLogin(ottc -> ottc
-                        .loginProcessingUrl("/account/ott-submit"))
+                        .loginProcessingUrl("/account/ott-submit")
+                        .showDefaultSubmitPage(false)
+                        .authenticationFailureHandler(new SimpleUrlAuthenticationFailureHandler("/account/login?error"))
+                )
                 .build();
     }
 
