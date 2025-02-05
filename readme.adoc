@@ -1,0 +1,134 @@
+= Spring One Time Token
+
+One-Time Tokens (OTT) are feature introduced in Spring Security 6.4 / Spring Boot 3.4 and provide a way to authenticate users without additional account setup.
+
+
+Example demonstrates how to use the feature by implementing __forgot password__ and __activate account__ functionality.
+
+In both cases we'll send user email with temporary __magic link__, they can use to log in and change their password or activate their accout.
+
+
+== Full flow
+
+[mermaid,test]
+----
+flowchart 
+    subgraph OneTimeTokenService
+        token_db[(Jdbc/InMemory)]
+    end
+
+    style user fill:#f96
+    subgraph user
+        direction RL
+        start(((START)))
+        start-->ott_generate
+        ott_generate>Generate new token /ott/generate]
+        mail_client[mail client]
+        click_ott_link>Click ott link]
+        mail_client-->click_ott_link
+    end
+
+    subgraph token_generation[token generation] 
+        direction TB
+        generate_token_filter[\GenerateOneTimeTokenFilter/]
+        style send_token stroke:#f00
+        generate_token_filter--pass token-->send_token[OneTimeTokenGenerationSuccessHandler]
+        style notify_user stroke:#f00
+        send_token-->notify_user[RedirectOneTimeTokenGenerationSuccessHandler]
+    end
+
+    subgraph token_consumption[token consumption]
+        direction TB
+        display_token_page([public page to accept the token])
+        consume_ott_link[\SecurityFilterChain/]
+        display_token_page--post token to /login/ott-->consume_ott_link
+        consume_ott_link-->extract_token[\OneTimeTokenAuthenticationConverter/]
+        extract_token--extract token from request-->authenticate_via_token[OneTimeTokenAuthenticationProvider]
+        authenticate_via_token<--authenticate OneTimeTokenAuthenticationToken-->token_valid{check & consume token}
+        token_valid<-->token_db
+        token_valid--token is valid-->log_in[authenticate and log in user]
+    end
+
+    ott_generate-->generate_token_filter
+    notify_user--web page to notify user token was sent-->user
+
+    generate_token_filter<--generate token for username-->token_db
+    style mail stroke:#f00
+    send_token--generate ott link-->mail[[mail service]]
+    mail--send mail with ott link-->mail_client
+    click_ott_link-->display_token_page
+----
+
+// == Token generation
+
+
+// [mermaid,test]
+// ----
+// flowchart 
+//     subgraph OneTimeTokenService
+//         token_db[(Jdbc/InMemory)]
+//     end
+
+//     style user fill:#f96
+//     subgraph user
+//         direction RL
+//         start(((START)))
+//         start-->ott_generate
+//         ott_generate>Generate new token /ott/generate]
+//         mail_client[mail client]
+//         click_ott_link>Click ott link]
+//         mail_client-->click_ott_link
+//     end
+
+//     subgraph token_generation[token generation] 
+//         direction TB
+//         generate_token_filter[\GenerateOneTimeTokenFilter/]
+//         style send_token stroke:#f00
+//         generate_token_filter--pass token-->send_token[OneTimeTokenGenerationSuccessHandler]
+//         style notify_user stroke:#f00
+//         send_token-->notify_user[RedirectOneTimeTokenGenerationSuccessHandler]
+//     end
+
+//     ott_generate-->generate_token_filter
+//     notify_user--web page to notify user token was sent-->user
+
+//     generate_token_filter<--generate token for username-->token_db
+//     style mail stroke:#f00
+//     send_token--generate ott link-->mail[[mail service]]
+//     mail--send mail with ott link-->mail_client
+// ----
+
+
+
+// == Token consumption
+
+// [mermaid,test]
+// ----
+// flowchart TB
+//     subgraph OneTimeTokenService
+//         token_db[(Jdbc/InMemory)]
+//     end
+
+//     style user fill:#f96
+//     subgraph user
+//         click_ott_link>Click ott link]
+//         mail_client-->click_ott_link
+//         ending(((END - display secured page)))
+//     end
+
+//     subgraph token_consumption[token consumption]
+//         direction TB
+//         display_token_page([public page to accept the token])
+//         consume_ott_link[\SecurityFilterChain/]
+//         display_token_page--post token to /login/ott-->consume_ott_link
+//         consume_ott_link-->extract_token[\OneTimeTokenAuthenticationConverter/]
+//         extract_token--extract token from request-->authenticate_via_token[OneTimeTokenAuthenticationProvider]
+//         authenticate_via_token<--authenticate OneTimeTokenAuthenticationToken-->token_valid{check & consume token}
+//         token_valid<-->token_db
+//         token_valid--token is valid-->log_in[authenticate and log in user]
+//     end
+
+//     click_ott_link-->display_token_page
+//     log_in-->ending
+// ----
+
