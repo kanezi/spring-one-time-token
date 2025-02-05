@@ -2,6 +2,7 @@ package com.kanezi.spring_one_time_token.account;
 
 import lombok.Value;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -36,9 +37,13 @@ public class AccountController {
         return "account/ott-sent";
     }
 
+    record OttReason(String title, String action, String reason){}
+
     @GetMapping("/reset-password")
-    String showOttSubmitForm(@RequestParam(value = "token") String token) {
-        return "redirect:/login/ott?token="+token;
+    String showOttSubmitForm(@RequestParam(value = "token") String token, Model model) {
+        model.addAttribute("ottReason", new OttReason("Password reset", "Reset password", "change-password"));
+        //return "redirect:/login/ott?token="+token;
+        return "/account/ott-login";
     }
 
 }
