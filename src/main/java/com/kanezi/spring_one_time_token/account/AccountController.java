@@ -16,7 +16,9 @@ public class AccountController {
     AccountService accountService;
 
     @GetMapping(value = {"", "/sign-in", "/login"})
-    String showSignInForm(@RequestParam(required = false, defaultValue = "true") boolean error) {
+    String showSignInForm(@RequestParam(required = false, defaultValue = "true") boolean error,
+                          @RequestParam(required = false, defaultValue = "true", name = "continue") boolean continueFlag
+    ) {
         return "account/sign-in";
     }
 

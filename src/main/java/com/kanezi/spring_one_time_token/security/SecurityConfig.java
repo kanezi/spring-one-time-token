@@ -19,13 +19,12 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(r -> r
-                        .requestMatchers("/account/**", "/error", "/").permitAll()
+                        .requestMatchers("/account/**", "/error", "/", "/*.*").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(flc -> flc
                         .loginPage("/account/login")
                         .usernameParameter("email")
                         .defaultSuccessUrl("/user")
-                        .failureForwardUrl("/account/login?error")
                 )
                 .logout(lc -> lc
                         .logoutUrl("/account/logout")

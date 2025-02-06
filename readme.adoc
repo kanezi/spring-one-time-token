@@ -5,10 +5,17 @@ One-Time Tokens (OTT) are feature introduced in Spring Security 6.4 / Spring Boo
 
 Example demonstrates how to use the feature by implementing __forgot password__ and __activate account__ functionality.
 
-In both cases we'll send user email with temporary __magic link__, they can use to log in and change their password or activate their accout.
+In both cases we'll send user email with temporary __magic link__, they can use to log in and change their password or activate their account.
 
 
 == Full flow
+
+
+image:docs/images/spring_one_time_token_flow.png[one time token full flow]
+
+=== Mermaid diagram
+
+WARNING: may not be displayed properly
 
 [mermaid,test]
 ----

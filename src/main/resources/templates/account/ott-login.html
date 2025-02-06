@@ -53,7 +53,6 @@
               xhr.send(new URLSearchParams(new FormData(ottForm)).toString());
 
               xhr.onreadystatechange = function() {
-                console.log(xhr);
                 if(xhr.readyState == 4 && xhr.status == 200) {
                   if (xhr.responseURL.includes("error")) {
                      window.location.replace(xhr.responseURL);

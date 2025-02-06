@@ -6,10 +6,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
-@RequestMapping("/")
+//@RequestMapping("/")
 public class IndexController {
 
-    @GetMapping
+    @GetMapping("/")
     String index(@RequestParam(name = "logout", defaultValue = "true", required = false) boolean logout) {
         return "index";
     }
