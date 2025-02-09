@@ -1,0 +1,149 @@
+= Flow for One Time Tokens
+
+
+[plantuml, puml, svg]
+----
+@startuml
+
+skin rose
+
+title Use Case Diagram 
+
+
+(Login)
+(Run Process) as (Proc1)
+usecase (Undo Process)
+usecase (Log Out) as UC4
+
+
+:Administrator:
+:Standard User: as SU  
+actor Accountant
+actor :Client: as C
+
+Employee -up-|> User
+Client -up-|> User
+Supervisor -up-|> User
+Employee --> (Login)
+Supervisor --> (Login)
+Client ..> (Login) : NO!!!!
+Supervisor --> (Create / Delete User): I am god
+
+
+(Login) as L
+(Upload File) as UF<<Manual>>
+actor :User: as U<<Person>>
+:HAL: as H<<Computer>>
+
+U -> UF
+U ---> (L)
+H <.up.> (L)
+
+
+
+@enduml
+----
+
+
+
+
+[plantuml, puml, svg]
+----
+@startuml
+
+!theme blueprint
+'!theme vibrant
+'!theme toy
+'!theme sketchy-outline
+'!theme plain
+'!theme mars
+'!theme crt-amber
+'!theme amiga
+
+'skinparam defaultFontName Consolas
+'skinparam defaultFontName TimesNewRoman
+'skinparam defaultMonospacedFontName Consolas
+
+
+title Package - Use Case Diagram
+
+rectangle Features {
+    (Login)
+    (Create / Delete User) as CDU
+}
+
+:Employee: 
+:Client:
+:Supervisor:
+
+Employee --> (Login)
+Supervisor --> (Login)
+Client ..> (Login) : NO oo00!!!!
+Supervisor ---> CDU: I am god
+@enduml
+----
+
+
+[plantuml, puml, svg]
+----
+@startuml
+
+!theme blueprint
+
+'skinparam defaultFontName Consolas
+
+title Spring Security - One Time Tokens - generate token
+
+rectangle Application {
+    (OneTimeTokenService)
+    (webUI)
+    (ott generation success handler) as succ
+}
+
+(email client)
+
+:user:
+
+user --> (webUI): request ott
+(webUI) .left.> (OneTimeTokenService): generate token for user
+(OneTimeTokenService) --> (succ): pass token
+(succ) --> (email client): send activation link
+(succ) --> :user:: notify user
+
+
+@enduml
+----
+
+
+
+
+[plantuml, puml, svg]
+----
+@startuml
+
+!theme blueprint
+
+'skinparam defaultFontName Consolas
+
+title Spring Security - One Time Tokens - consume token
+
+rectangle Application {
+    (OneTimeTokenService)
+    (webUI)
+    (ott validation)
+}
+
+(email client)
+
+:user:
+
+
+:user: --> (email client): click magic link
+(email client) --> (webUI): redirect to app
+(webUI) --> (ott validation): check token
+(ott validation)<..>(OneTimeTokenService): consume and validate token
+(ott validation) <-up->(ott validation):log in user
+
+
+@enduml
+----

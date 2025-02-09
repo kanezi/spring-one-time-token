@@ -1,0 +1,194 @@
+= Spring Security One Time Tokens
+
+One-Time Tokens (OTT) are feature introduced in Spring Security 6.4 / Spring Boot 3.4 and provide a way to authenticate users without additional account setup.
+
+
+The One-Time Token Login works in two major steps.
+
+* User requests a token by submitting their user identifier, usually the username, and the token is delivered to them, often as a Magic Link, via e-mail, SMS, etc.
+
+* User submits the token to the one-time token login endpoint and, if valid, the user gets logged in.
+
+
+We can use the feature for functionality that requires the user to perform authenticated actions without logging in, like __resetting passwords__ and __activating account__.
+
+Having access to the Magic Link we send via channel owned by user, like their email, is enough for our app to consider user identity valid and automatically log them in.
+
+== Initial setup
+
+One time token is Spring Security feature which we need to have as dependency in our project:
+
+[source,xml]
+----
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-security</artifactId>
+</dependency>
+----
+
+and our ```SecurityFilterChain``` bean has to have ```oneTimeTokenLogin``` feature enabled:
+
+[source,java]
+----
+@Bean
+SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    return http
+            .authorizeHttpRequests(r -> r
+                    .requestMatchers("/account/**").permitAll()
+                    .anyRequest().authenticated())
+            .formLogin(Customizer.withDefaults())
+            .oneTimeTokenLogin(Customizer.withDefaults())
+            .build();
+}
+----
+
+With this Spring configures form for requesting token generation and token submission endpoint, but after token generation Spring can not reasonably determine the way the token should be delivered to your users:
+
+image::image$ott_flow_01_what_to_do_with_token.png[what to do with token]
+
+and in fact, with this configuration our application would not start with error:
+
+----
+java.lang.IllegalStateException: A OneTimeTokenGenerationSuccessHandler is required to enable oneTimeTokenLogin().
+Please provide it as a bean or pass it to the oneTimeTokenLogin() DSL.
+----
+
+Spring expects us to configure ```OneTimeTokenGenerationSuccessHandler``` after it has generated one time token to send it to our users via channel appropriate to our app.
+
+One of more common ways would be to email our users link and show them web page that link has been sent.
+
+image::image$ott_flow_02_implement_success_handler.png[email and show web page success handler]
+
+
+With assumption we have ```EmailService``` that can send emails, and that our users usernames are emails, so we don't have to do additional lookup for email based on username, our success handler might look like:
+
+[source,java]
+----
+@Component
+@Value
+public class MagicLinkOneTimeTokenGenerationSuccessHandler implements OneTimeTokenGenerationSuccessHandler {
+
+    MailService mailService;
+    OneTimeTokenGenerationSuccessHandler redirectHandler = new RedirectOneTimeTokenGenerationSuccessHandler("/account/ott-sent");
+
+    @SneakyThrows
+    @Override
+    public void handle(HttpServletRequest request, HttpServletResponse response, OneTimeToken oneTimeToken) throws IOException, ServletException {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
+                .replacePath(request.getContextPath())
+                .replaceQuery(null)
+                .fragment(null)
+                .path("/login/ott")
+                .queryParam("token", oneTimeToken.getTokenValue());
+        // base_url/login/ott?token=<token>
+        String magicLink = builder.toUriString();
+
+        mailService.sendHtml(oneTimeToken.getUsername(),
+                "Your Spring Security One Time Token",
+                """
+                Use the following link to sign in into the application: <a href="%s">%s</a>
+                """.formatted(magicLink, magicLink));
+        this.redirectHandler.handle(request, response, oneTimeToken);
+    }
+}
+----
+
+We have to have ongoing Http request to dynamically conclude which base url is our app running on, so part of the code:
+
+[source,java]
+----
+UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(UrlUtils.buildFullRequestUrl(request))
+        .replacePath(request.getContextPath())
+        .replaceQuery(null)
+        .fragment(null)
+        .path("/login/ott")
+        .queryParam("token", oneTimeToken.getTokenValue());
+// base_url/login/ott?token=<token>
+----
+
+is used to get base url of the current http request (token generation request), remove everything but the base path, and add our own path **__/login/ott?token=<token>__**.
+
+Alternatively, we could place our app __base url__ as application property and construct Magic Link via simple String append.
+
+After we send user email, we redirect them to web page showing mail was sent with ```RedirectOneTimeTokenGenerationSuccessHandler("/account/ott-sent")```.
+
+We configured __/account/**__ to be public in our security configuration and we have to have controller that will respond to __/account/ott-sent__ endpoint:
+
+[source,java]
+----
+@Controller
+@RequestMapping("/account")
+public class AccountController {
+
+    @GetMapping("/ott-sent")
+    String ottLinkSent() {
+        return "account/ott-sent";
+    }
+}
+----
+
+with html page:
+
+[source,html]
+----
+<!DOCTYPE html>
+<html>
+....
+    <p>
+        We have sent you activation link! Please check your email!
+    </p>
+....
+</html>
+----
+
+== Default implementation
+
+With setup above, if we try to access our app, we are presented with Spring Security default login form augmented with additional Request a One Time Token form, where we can request new token generation for our user.
+
+
+image::image$ott_flow_03_one_time_token_request_form.PNG[one time token request form]
+
+
+Requesting a token, sends our user mail with Magic Link:
+
+
+image::image$ott_flow_04_email_with_activation_link.PNG[email with Magic Link]
+
+and displays user our web page that link was sent:
+
+image::image$ott_flow_05_web_page_success_message.PNG[web page link sent message]
+
+
+Users are shown default token submission page prepopulated with token value, after they click Magic Link:
+
+image::image$ott_flow_06_ott_submission_endpoint.PNG[token submission]
+
+which let's them sign in.
+
+== One Time Token Flow
+
+More detailed flowchart more clearly demonstrates that there are two parts, token generation and submission.
+
+**OneTimeTokenService** is common denominator responsible for token generation in the first part, and token consumption and validation in the second.
+
+image::image$spring_one_time_token_flow.png[One Time Token Flow]
+
+
+== Customizations
+
+For real world apps we, obviously, dont want to use Springs default web pages for form login, requesting tokens and token submission.
+
+We would need to customize look to fit our needs, for instance token requesting page might look like:
+
+image::image$request_token_custom_page.PNG[request token custom page]
+
+and as for token request part it can be done in parts where it makes sense for our app, like in above example for resetting passwords.
+
+For token submission part we should also customize the page look, but can use default Spring token validation functionality.
+
+
+In depth look of customizations is shown in GitHub repository link:https://github.com/kanezi/spring-one-time-token[spring-one-time-token]:
+
+and explained in youtube video link:https://youtu.be/IL0K0-vbnes[Reset Passwords & Activate Accounts with Spring One Time Tokens]
+
+

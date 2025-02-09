@@ -1,0 +1,3 @@
+// this is not used - navigation is in antora-demo repository
+.One Time Tokens
+* xref:spring-tuts:one-time-token:spring-security-one-time-token.adoc[One Time Tokens]
